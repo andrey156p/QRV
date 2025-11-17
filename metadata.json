@@ -1,0 +1,5 @@
+{
+  "name": "QR Video Player System",
+  "description": "A system to manage videos in an admin panel and play them full-screen on mobile devices by scanning a QR code. Includes multi-language support.",
+  "requestFramePermissions": []
+}
