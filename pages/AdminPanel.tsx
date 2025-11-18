@@ -4,6 +4,10 @@ import type { Video } from '../types';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { useLocalization } from '../hooks/useLocalization';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { ProgressBar } from '../components/ProgressBar';
+import { PLACEHOLDER_VIDEO_URL, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../config';
+
 
 // Этап 5: Создание Панели Администратора
 // Это основной экран для управления вашими видео.
@@ -53,10 +57,13 @@ const QRCodeModal: React.FC<{ video: Video; onClose: () => void }> = ({ video, o
 const AdminPanel: React.FC = () => {
     const [videos, setVideos] = useState<Video[]>([]);
     const [newVideoName, setNewVideoName] = useState('');
+    const [newVideoUrl, setNewVideoUrl] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [selectedQrVideo, setSelectedQrVideo] = useState<Video | null>(null);
+    const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
     const { t, dir } = useLocalization();
 
     const fetchVideos = useCallback(async () => {
@@ -77,14 +84,71 @@ const AdminPanel: React.FC = () => {
             return;
         }
         setIsUploading(true);
-        // В реальном приложении здесь была бы логика загрузки файла на сервер.
-        // Мы имитируем это, используя ссылку на стоковое видео.
-        const placeholderVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4';
-        await addVideo(newVideoName, placeholderVideoUrl);
-        setNewVideoName('');
-        setSelectedFile(null);
-        await fetchVideos();
-        setIsUploading(false);
+        setUploadProgress(uploadMode === 'file' ? 0 : null);
+        
+        try {
+            let videoUrl = '';
+            if (uploadMode === 'file') {
+                if (!selectedFile) {
+                    alert(t('noFileSelected'));
+                    setIsUploading(false);
+                    return;
+                }
+                 videoUrl = await uploadToCloudinary(selectedFile, (progress) => {
+                    setUploadProgress(progress);
+                });
+
+            } else { // url mode
+                videoUrl = newVideoUrl.trim() || PLACEHOLDER_VIDEO_URL;
+            }
+
+            await addVideo(newVideoName, videoUrl);
+
+            setNewVideoName('');
+            setSelectedFile(null);
+            setNewVideoUrl('');
+            await fetchVideos();
+
+        } catch (error) {
+            console.error("Upload failed:", error);
+            alert(t('uploadFailed'));
+        } finally {
+            setIsUploading(false);
+            setUploadProgress(null);
+        }
+    };
+
+    const uploadToCloudinary = (file: File, onProgress: (progress: number) => void): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`, true);
+
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentCompleted = Math.round((event.loaded * 100) / event.total);
+                    onProgress(percentCompleted);
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    resolve(response.secure_url);
+                } else {
+                    reject(new Error(`Upload failed with status ${xhr.status}: ${xhr.responseText}`));
+                }
+            };
+
+            xhr.onerror = () => {
+                reject(new Error('Network error during upload.'));
+            };
+            
+            xhr.send(formData);
+        });
     };
 
     const handleToggleActive = async (id: string, currentStatus: boolean) => {
@@ -96,7 +160,10 @@ const AdminPanel: React.FC = () => {
         <div className="container mx-auto p-4 md:p-8" dir={dir}>
             <header className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{t('adminPanelTitle')}</h1>
-                <LanguageSelector />
+                <div className="flex items-center gap-4">
+                  <LanguageSelector />
+                  <ThemeToggle />
+                </div>
             </header>
             
             <div className="bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500 text-blue-700 dark:text-blue-200 p-4 rounded-md mb-8" role="alert">
@@ -121,23 +188,60 @@ const AdminPanel: React.FC = () => {
                                     required
                                 />
                             </div>
+
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('selectFile')}</label>
-                                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
-                                    <div className="space-y-1 text-center">
-                                        <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">{selectedFile ? selectedFile.name : 'MP4, MOV, etc.'}</p>
-                                        <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="video/*" onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)} />
-                                    </div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('uploadMethod')}</label>
+                                <div className="mt-1 flex rounded-md shadow-sm">
+                                    <button type="button" onClick={() => setUploadMode('file')} className={`px-4 py-2 text-sm font-medium rounded-l-md w-1/2 ${uploadMode === 'file' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'}`}>
+                                        {t('fromFile')}
+                                    </button>
+                                    <button type="button" onClick={() => setUploadMode('url')} className={`px-4 py-2 text-sm font-medium rounded-r-md w-1/2 -ml-px ${uploadMode === 'url' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'}`}>
+                                        {t('fromURL')}
+                                    </button>
                                 </div>
                             </div>
+                            
+                            {uploadMode === 'file' ? (
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('selectFile')}</label>
+                                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
+                                        <div className="space-y-1 text-center">
+                                            <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">{selectedFile ? selectedFile.name : 'MP4, MOV, WebM, etc.'}</p>
+                                            <label htmlFor="file-upload" className="relative cursor-pointer bg-white dark:bg-gray-700 rounded-md font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                <span>Upload a file</span>
+                                                <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="video/*" onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)} />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="mb-4">
+                                    <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('videoURL')}</label>
+                                    <input
+                                        type="url"
+                                        id="videoUrl"
+                                        value={newVideoUrl}
+                                        onChange={(e) => setNewVideoUrl(e.target.value)}
+                                        className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                        placeholder="https://example.com/video.mp4"
+                                    />
+                                </div>
+                            )}
+
                             <button
                                 type="submit"
                                 disabled={isUploading}
-                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300"
+                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 dark:disabled:bg-indigo-800"
                             >
                                 {isUploading ? t('uploading') : t('upload')}
                             </button>
+                            {isUploading && uploadProgress !== null && (
+                                <div className="mt-4">
+                                     <ProgressBar progress={uploadProgress} />
+                                     <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">{t('uploadProgress')}: {uploadProgress}%</p>
+                                </div>
+                            )}
                         </form>
                     </div>
                 </div>

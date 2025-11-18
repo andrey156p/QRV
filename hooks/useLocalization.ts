@@ -9,7 +9,7 @@ import type { Language } from '../types';
 const translations = {
   en: {
     adminPanelTitle: 'Admin Panel - Video Management',
-    cloudHostingTip: 'Tip: For video hosting, consider services like Cloudinary or Mux. They have generous free plans for developers.',
+    cloudHostingTip: 'Tip: Videos are uploaded to Cloudinary. You can manage them in your Cloudinary account.',
     uploadVideo: 'Upload New Video',
     videoName: 'Video Name',
     selectFile: 'Select a video file',
@@ -27,11 +27,20 @@ const translations = {
     playerLoading: 'Loading video...',
     playerNotFound: 'Video not found or is inactive.',
     tapToPlay: 'Tap to Play',
+    replayVideo: 'Tap to Replay',
     language: 'Language',
+    uploadMethod: 'Upload Method',
+    fromFile: 'From File',
+    fromURL: 'From URL',
+    videoURL: 'Video URL',
+    noFileSelected: 'Please select a file first.',
+    uploadFailed: 'Upload failed. Please check the console for details.',
+    uploadProgress: 'Upload Progress',
+
   },
   ru: {
     adminPanelTitle: 'Админ-панель - Управление видео',
-    cloudHostingTip: 'Совет: Для видеохостинга рассмотрите сервисы, такие как Cloudinary или Mux. У них есть щедрые бесплатные тарифы для разработчиков.',
+    cloudHostingTip: 'Совет: Видео загружаются в Cloudinary. Вы можете управлять ими в своем аккаунте Cloudinary.',
     uploadVideo: 'Загрузить новое видео',
     videoName: 'Название видео',
     selectFile: 'Выберите видеофайл',
@@ -49,11 +58,19 @@ const translations = {
     playerLoading: 'Загрузка видео...',
     playerNotFound: 'Видео не найдено или неактивно.',
     tapToPlay: 'Нажмите для воспроизведения',
+    replayVideo: 'Нажмите для повтора',
     language: 'Язык',
+    uploadMethod: 'Способ загрузки',
+    fromFile: 'Из файла',
+    fromURL: 'По ссылке',
+    videoURL: 'Ссылка на видео',
+    noFileSelected: 'Пожалуйста, сначала выберите файл.',
+    uploadFailed: 'Ошибка загрузки. Проверьте консоль для деталей.',
+    uploadProgress: 'Прогресс загрузки',
   },
   he: {
     adminPanelTitle: 'פאנל ניהול - ניהול וידאו',
-    cloudHostingTip: 'טיפ: לאירוח וידאו, שקול שירותים כמו Cloudinary או Mux. יש להם תוכניות חינמיות נדיבות למפתחים.',
+    cloudHostingTip: 'טיפ: סרטונים מועלים ל-Cloudinary. תוכל לנהל אותם בחשבון Cloudinary שלך.',
     uploadVideo: 'העלאת וידאו חדש',
     videoName: 'שם הוידאו',
     selectFile: 'בחר קובץ וידאו',
@@ -71,7 +88,15 @@ const translations = {
     playerLoading: 'טוען וידאו...',
     playerNotFound: 'הוידאו לא נמצא או לא פעיל.',
     tapToPlay: 'לחץ להפעלה',
+    replayVideo: 'לחץ להפעלה מחדש',
     language: 'שפה',
+    uploadMethod: 'שיטת העלאה',
+    fromFile: 'מקובץ',
+    fromURL: 'מכתובת URL',
+    videoURL: 'כתובת הוידאו',
+    noFileSelected: 'אנא בחר קובץ תחילה.',
+    uploadFailed: 'ההעלאה נכשלה. בדוק את הקונסולה לפרטים.',
+    uploadProgress: 'התקדמות ההעלאה',
   },
 };
 
@@ -94,7 +119,6 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
   
-  // FIX: Explicitly typing `dir` ensures it is not widened to `string` during type inference.
   const dir: 'ltr' | 'rtl' = useMemo(() => (language === 'he' ? 'rtl' : 'ltr'), [language]);
 
   useEffect(() => {

@@ -23,10 +23,8 @@ const PlayIcon: React.FC = () => (
 );
 
 const ReplayIcon: React.FC = () => (
-    <svg className="w-24 h-24 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 18a8 8 0 100-16 8 8 0 000 16zM12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.49 19.49L21 21m-1-1l-1.51-1.51" />
+    <svg className="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
     </svg>
 );
 
@@ -116,6 +114,7 @@ const VideoPlayer: React.FC = () => {
                 <div onClick={handleReplay} className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black bg-opacity-50">
                      <div className="text-center">
                         <ReplayIcon />
+                        <p className="mt-4 text-white text-2xl font-semibold">{t('replayVideo')}</p>
                     </div>
                 </div>
             )}
