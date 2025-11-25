@@ -1,22 +1,25 @@
-
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import { LocalizationProvider } from './hooks/useLocalization';
-import { ThemeProvider } from './hooks/useTheme';
-
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QR Video Player System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
+    "qrcode.react": "https://aistudiocdn.com/qrcode.react@^4.2.0"
+  }
 }
-
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <LocalizationProvider>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
-    </LocalizationProvider>
-  </React.StrictMode>
-);
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel" data-type="module" data-presets="react,typescript" src="./index.js"></script>
+  </body>
+</html>
